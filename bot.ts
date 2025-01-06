@@ -13,13 +13,14 @@ interface Movie {
   vote_average: number;
   genres_ids: number[];
 }
+import "jsr:@std/dotenv/load";
+
+const tmdbApiKey = Deno.env.get("TMDB_API_KEY")!;
 
 type CallbackData = `next_movie_${number}`;
 
-const bot = new Bot("7323791733:AAFhMNYka7fWW_9Vcrxyd7zwR_kagIPpI_Y");
+const bot = new Bot(Deno.env.get("TELEGRAM_BOT_TOKEN")!);
 const tmdbApiEndPoint = "https://api.themoviedb.org/3/movie/";
-const tmdbApiKey =
-  "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4MDY2YmUxYjEzYTVkZjM5NDA3ZDlmNTgzZDU3OWQ1ZCIsIm5iZiI6MTY3MTI1MDYzNS42NDEsInN1YiI6IjYzOWQ0MmNiOWJjZDBmMDA4YzUxYWFjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.0W3011-5E9-9E0MDSB8rf6x3eHy-FQn4R-3dBC-VU-o";
 
 let currentMovieIndex = 0;
 let movies: Movie[] = [];
@@ -76,14 +77,21 @@ const sendMovieCard = async (ctx: Context, movieIndex: number) => {
 };
 
 bot.on("callback_query:data", async (ctx: Context) => {
-  const data = ctx.callbackQuery.data;
+  // Check if callbackQuery is defined
+  const callbackQuery = ctx.callbackQuery;
+  if (!callbackQuery) {
+    return; // If callbackQuery is not defined, do nothing
+  }
 
-  if (data.startsWith("next_movie_")) {
-    const index = parseInt(data.split("_")[2]);
+  const data = callbackQuery.data;
+
+  if (data!.startsWith("next_movie_")) {
+    const index = parseInt(data!.split("_")[2]);
 
     currentMovieIndex = (index + 1) % movies.length;
     await sendMovieCard(ctx, currentMovieIndex);
   }
+
   await ctx.answerCallbackQuery();
 });
 
